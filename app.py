@@ -138,3 +138,6 @@ if uploaded_file is not None:
             st.pyplot(fig)
 
 st.sidebar.markdown('**Currently working on 12 hour data(AM|PM)**')
+
+if __name__=='__main__':
+    main()
