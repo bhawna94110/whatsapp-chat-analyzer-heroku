@@ -1,143 +1,163 @@
 import streamlit as st
-import preprocessor, helper
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-st.sidebar.title("Whatsapp Chat Analyzer")
-
-st.set_option('deprecation.showfileUploaderEncoding', False)
-
-st.sidebar.markdown("This app is use to analyze your WhatsApp Chats")
+import pickle
+from PIL import Image
+import base64
 
 
 
-st.sidebar.markdown('**How to export chat text file? (Not Available on Whatsapp Web)**')
-st.sidebar.text('Follow these steps 👇:')
-st.sidebar.text('1) Open the individual or group chat.')
-st.sidebar.text('2) Tap options > More > Export chat.')
-st.sidebar.text('3) Choose export without media.')
-st.sidebar.markdown('*You are all set to go 😃*.')
-st.sidebar.subheader('**FAQs**')
-st.sidebar.markdown('**What happens to my data?**')
-st.sidebar.markdown('The data you upload is not saved anywhere on this site or any 3rd party site i.e, not in any storage like DB/FileSystem/Logs.')
+DT_model=pickle.load(open('DT_model.pkl','rb'))
+RF_model=pickle.load(open('RF_model.pkl','rb'))
 
 
-uploaded_file = st.sidebar.file_uploader("Choose a file")
-if uploaded_file is not None:
-    bytes_data = uploaded_file.getvalue()
-    data = bytes_data.decode("utf-8")
-    df = preprocessor.preprocess(data)
 
 
-    #fetch unique user
-    user_list = df['user'].unique().tolist()
-    user_list.remove('group_notification')
-    user_list.sort()
-    user_list.insert(0,"Overall")
-    selected_user = st.sidebar.selectbox("Who's Stats do you want to see?",user_list)
+def classify(result):
+    if result == 'jogging':
+        image = Image.open('jog.jpg')
+        # st.image(image, caption='Jogging',use_column_width=True)
+        st.image(image,use_column_width=True)
+        html_temp = """
+        <div style="background-color:#9771E9 ;padding:10px">
+        <h2 style="color:white;text-align:center;">Jogging</h2>
+        </div>
+        """
+        st.markdown(html_temp, unsafe_allow_html=True)
+    elif result == 'walking':
+        image = Image.open('walk.jpg')
+        # st.image(image, caption='Jogging',use_column_width=True)
+        st.image(image,use_column_width=True)
+        html_temp = """
+        <div style="background-color:green ;padding:10px">
+        <h2 style="color:white;text-align:center;">Walking</h2>
+        </div>
+        """
+        st.markdown(html_temp, unsafe_allow_html=True)
+    elif result == 'sitting':
+        image = Image.open('sit.jpg')
+        # st.image(image, caption='Jogging',use_column_width=True)
+        st.image(image,use_column_width=True)
+        html_temp = """
+        <div style="background-color:green ;padding:10px">
+        <h2 style="color:white;text-align:center;">Sitting</h2>
+        </div>
+        """
+        st.markdown(html_temp, unsafe_allow_html=True)
+    elif result == 'standing':
+        image = Image.open('std.jpg')
+        # st.image(image, caption='Jogging',use_column_width=True)
+        st.image(image,use_column_width=True)
+        html_temp = """
+        <div style="background-color:green ;padding:10px">
+        <h2 style="color:white;text-align:center;">Standing</h2>
+        </div>
+        """
+        st.markdown(html_temp, unsafe_allow_html=True)
+    elif result == 'upstairs':
+        image = Image.open('ups.jpg')
+        # st.image(image, caption='Jogging',use_column_width=True)
+        st.image(image,use_column_width=True)
+        html_temp = """
+        <div style="background-color:green ;padding:10px">
+        <h2 style="color:white;text-align:center;">Upstairs</h2>
+        </div>
+        """
+        st.markdown(html_temp, unsafe_allow_html=True)
+    else:
+        image = Image.open('dws.jpg')
+        # st.image(image, caption='Jogging',use_column_width=True)
+        st.image(image,use_column_width=True)
+        html_temp = """
+        <div style="background-color:green ;padding:10px">
+        <h2 style="color:white;text-align:center;">Downstairs</h2>
+        </div>
+        """
+        st.markdown(html_temp, unsafe_allow_html=True)
+        
 
-    if st.sidebar.button("Show Analysis"):
 
-        # Stats Area
-        num_messages, words, num_media_messages, num_links = helper.fetch_stats(selected_user,df)
-        st.title("Top Statistics")
-        col1, col2, col3, col4 = st.columns(4)
 
-        with col1:
-            st.header("Total Messages")
-            st.title(num_messages)
-        with col2:
-            st.header("Total Words")
-            st.title(words)
-        with col3:
-            st.header("Media Shared")
-            st.title(num_media_messages)
-        with col4:
-            st.header("Links Shared")
-            st.title(num_links)
+def main():
+    st.set_page_config(page_title='HOLA')
+    hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 
-        #Monthly Timeline
-        st.title("Monthly Timeline")
-        timeline = helper.monthly_timeline(selected_user,df)
-        fig, ax = plt.subplots()
-        ax.plot(timeline['time'],timeline['message'],color='green')
-        plt.xticks(rotation='vertical')
-        st.pyplot(fig)
 
-        # Daily Timeline
-        st.title("Daily Timeline")
-        daily_timeline = helper.daily_timeline(selected_user, df)
-        fig, ax = plt.subplots()
-        ax.plot(daily_timeline['only_date'], daily_timeline['message'], color='black')
-        plt.xticks(rotation='vertical')
-        st.pyplot(fig)
 
-        # Activity Map
-        st.title("Activity Map")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.header("Most Busy Day")
-            busy_day = helper.week_activity_map(selected_user,df)
-            fig, ax = plt.subplots()
-            ax.bar(busy_day.index,busy_day.values)
-            plt.xticks(rotation='vertical')
-            st.pyplot(fig)
-        with col1:
-            st.header("Most Busy Month")
-            busy_month = helper.month_activity_map(selected_user,df)
-            fig, ax = plt.subplots()
-            ax.bar(busy_month.index,busy_month.values,color='orange')
-            plt.xticks(rotation='vertical')
-            st.pyplot(fig)
 
-        st.title("Weekly Activity Map")
-        user_heatmap = helper.activity_heatmap(selected_user,df)
-        fig, ax = plt.subplots()
-        ax = sns.heatmap(user_heatmap)
-        st.pyplot(fig)
 
-        # Finding the most busiest user in the group(Group Level)
-        if selected_user == "Overall":
-            st.title('Most Busy User')
-            x, new_df = helper.most_busy_user(df)
-            fig, ax = plt.subplots()
-            col1, col2 = st.columns(2)
-            with col1:
-                ax.bar(x.index, x.values,color='red')
-                plt.xticks(rotation='vertical')
-                st.pyplot(fig)
-            with col2:
-                st.dataframe(new_df)
+    main_bg = "background.jpg"
+    main_bg_ext = "jpg"
 
-        # wordcloud
-        st.title("Wordcloud")
-        df_wc = helper.create_wordcloud(selected_user,df)
-        fig, ax = plt.subplots()
-        ax.imshow(df_wc)
-        st.pyplot(fig)
+    side_bg = "background.jpg"
+    side_bg_ext = "jpg"
 
-        # most common words
-        most_common_df = helper.most_common_words(selected_user,df)
-        fig, ax = plt.subplots()
-        ax.barh(most_common_df[0],most_common_df[1])
-        plt.xticks(rotation='vertical')
-        st.title("Most common words")
-        st.pyplot(fig)
+    st.markdown(
+    f"""
+    <style>
+    .reportview-container {{
+        background: url(data:image/{main_bg_ext};base64,{base64.b64encode(open(main_bg, "rb").read()).decode()})
+    }}
+    .sidebar .sidebar-content {{
+        background: url(data:image/{side_bg_ext};base64,{base64.b64encode(open(side_bg, "rb").read()).decode()})
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+    )
 
-        # emoji analysis
-        emoji_df = helper.emoji_helper(selected_user, df)
-        st.title("Emoji Analysis")
 
-        col1, col2 = st.columns(2)
+    html_temp = """
+    <div style="background-color:#000000 ;padding:10px">
+    <h2 style="color:white;text-align:center;">Motion Detection</h2>
+    </div>
+    """
+    st.markdown(html_temp, unsafe_allow_html=True)
+    activities=['Decision Tree','Random Forest']
+    option=st.sidebar.selectbox('Which model would you like to use?',activities)
+    st.subheader(option)
+    f1=st.slider('Select attitude.roll', -3.14159, 3.14158)
+    f2=st.slider('Select attitude.pitch', -1.56997, 1.56717)
+    f3=st.slider('Select attitude.yaw', -3.14159, 3.14159)
+    f4=st.slider('Select gravity.x', -0.99982, 1.0)
+    f5=st.slider('Select gravity.y', -1.0, 1.0)
+    f6=st.slider('Select gravity.z', -1.0, 1.0)
+    f7=st.slider('Select rotationRate.x', -17.36579, 10.46806)
+    f8=st.slider('Select rotationRate.y', -18.41441, 17.54312)
+    f9=st.slider('Select rotationRate.z', -12.15124, 11.43624)
+    f10=st.slider('Select userAcceleration.x', -6.36926, 7.12079)
+    f11=st.slider('Select userAcceleration.y',-5.67359, 7.32272)
+    f12=st.slider('Select userAcceleration.z', -7.74348, 8.12536)
+    f13=st.slider('Select subject', 1, 24)
 
-        with col1:
-            st.dataframe(emoji_df)
-        with col2:
-            fig, ax = plt.subplots()
-            ax.pie(emoji_df[1].head(), labels=emoji_df[0].head(), autopct="%0.2f")
-            st.pyplot(fig)
 
-st.sidebar.markdown('**Currently working on 12 hour data(AM|PM)**')
+    inputs=[[f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13]]
+    if st.button('Classify'):
+        if option=='Decision Tree':
+            #st.success((DT_model.predict(inputs))[0])
+            classify((DT_model.predict(inputs))[0])
+        else:
+            #st.success((RF_model.predict(inputs))[0])
+            classify((RF_model.predict(inputs))[0])
+
+
+    
+
+
+
+
+
+    # feature_choice2 = st.sidebar.multiselect("Plot Size",result)
+    # if st.button('Find Blueprint'):
+    #     if feature_choice2 == '3-marla':
+
+
 
 if __name__=='__main__':
     main()
+© 2022 GitHub, Inc.
+Terms
