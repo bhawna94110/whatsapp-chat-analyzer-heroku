@@ -1,1 +1,1 @@
-web: sh setup.sh && streamlit run motion.py
+web: sh setup.sh && streamlit run whatsapp_analyze.py
